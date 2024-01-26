@@ -1,10 +1,39 @@
 from flask import Blueprint, jsonify,request
 from flask_jwt_extended import create_access_token, create_refresh_token, jwt_required, current_user,get_jwt, get_jwt_identity
 from models import User,TokenBlocklist
+from extensions import db, jwt
 
-auth = Blueprint('auth', __name__)
+auth_bp = Blueprint('auth', __name__)
 
-@auth.post('/signup')
+# load user
+@jwt.user_lookup_loader
+def user_lookup_callback(_jwt_headers, jwt_data):
+    identity = jwt_data["sub"]
+
+    return User.query.filter_by(name=identity).one_or_none()
+
+# jwt error handlers
+@jwt.expired_token_loader
+def expired_token_callback(jwt_header, jwt_data):
+    return jsonify({'message': "Token has expired", "error": "token_expired"}), 401
+
+@jwt.invalid_token_loader
+def invalid_token_callback(error):
+    return jsonify({'message': "Signature verification failed", "error": "invalid_token"}), 401
+
+@jwt.unauthorized_loader
+def missing_token_callback(error):
+    return jsonify({'message': "Request does not contain a valid token", "error": "authorization required"}), 401
+
+@jwt.token_in_blocklist_loader
+def token_in_blocklist_callback(jwt_header,jwt_data):
+    jti = jwt_data['jti']
+
+    token = db.session.query(TokenBlocklist).filter(TokenBlocklist.jti == jti).scalar()
+
+    return token is not None
+
+@auth_bp.post('/signup')
 def signup():
     data = request.get_json()
     user = User.get_user_by_name(name= data.get('name'))
@@ -21,7 +50,7 @@ def signup():
     return jsonify({"message": "User created"}), 201
 
 
-@auth.route('/login',  methods=["POST"])
+@auth_bp.route('/login',  methods=["POST"])
 def login():
     data = request.get_json()
 
@@ -38,7 +67,7 @@ def login():
 
     return jsonify({"error": "Invalid name or password"}), 400
 
-@auth.get("/whoami")
+@auth_bp.get("/whoami")
 @jwt_required()
 def whoami():
     claims = get_jwt()
@@ -53,7 +82,7 @@ def whoami():
     )
 
 # regain access route 
-@auth.get("/refresh")
+@auth_bp.get("/refresh")
 @jwt_required(refresh=True)
 def refresh_access():
     identity = get_jwt_identity()
@@ -62,7 +91,7 @@ def refresh_access():
 
     return jsonify({"access_token": new_access_token})
 
-@auth.get('/logout')
+@auth_bp.get('/logout')
 @jwt_required(verify_type=False) 
 def logout_user():
     jwt = get_jwt()

@@ -1,6 +1,6 @@
 from extensions import db
 from faker import Faker
-from main import create_app
+from app import create_app
 from models import User, Product, Order, Cart, Address, Transaction
 
 fake = Faker()
