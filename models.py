@@ -55,28 +55,35 @@ class Product(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     price = db.Column(db.Float, nullable=False)
-    image_url = db.Column(db.String(255))  
+    image_url = db.Column(db.String(255))
+    category_id= db.Column(db.Integer, db.ForeignKey('categories.id'))  
 
     # Relationships
     order_items = db.relationship('OrderItem', backref='product', lazy=True)
+    carts = db.relationship('Cart', backref='product', lazy=True)
 
-    
+class Category(db.Model):
+    __tablename__ = 'categories'
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+
+    products = db.relationship('Product', backref='category', lazy=True)
 
 class Cart(db.Model):
     __tablename__ = 'carts'
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
-
-    # Relationships
-    orders = db.relationship('Order', backref='cart', lazy=True)
+    product_id= db.Column(db.Integer, db.ForeignKey('products.id'))
+    quantity = db.Column(db.Integer)
 
 
 class Order(db.Model):
     __tablename__ = 'orders'
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    cart_id = db.Column(db.Integer, db.ForeignKey('carts.id'), nullable=False)
+    amount = db.Column(db.Integer, nullable=False)
 
     # Relationships
     order_items = db.relationship('OrderItem', backref='order', lazy=True)
@@ -84,6 +91,7 @@ class Order(db.Model):
 
 class OrderItem(db.Model):
     __tablename__ = 'orderitems'
+
     id = db.Column(db.Integer, primary_key=True)
     order_id = db.Column(db.Integer, db.ForeignKey('orders.id'), nullable=False)
     product_id = db.Column(db.Integer, db.ForeignKey('products.id'), nullable=False)
@@ -103,3 +111,4 @@ class Address(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     street = db.Column(db.String(255), nullable=False)
     city = db.Column(db.String(100), nullable=False)
+    phone_number = db.Column(db.String(20))
