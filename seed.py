@@ -100,7 +100,7 @@ def generate_fake_data():
             name=fake.random_element(elements=electronics_words),
             price=fake.random_number(2),
             category_id=fake.random_element(elements=category_ids),
-            image_url=f"https://example.com/electronics/{fake.random_number(3)}.jpg"
+            image_url=fake.image_url()
         ) for _ in range(10)
     ]
     # carts = [Cart(user=user) for user in users]
