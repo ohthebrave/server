@@ -1,6 +1,6 @@
 from flask import Blueprint, jsonify, make_response, request
 from extensions import db
-from models import User, Product, Order, Cart, Address, Transaction, OrderItem
+from models import User, Product, Order, Cart, Address, Transaction, OrderItem, Category, Contact
 
 main_bp = Blueprint('main', __name__)
 
@@ -171,3 +171,79 @@ def get_all_order_items():
     order_items = OrderItem.query.all()
     order_items_data = [{'id': order_item.id, 'order_id': order_item.order_id, 'product_id': order_item.product_id, 'quantity': order_item.quantity} for order_item in order_items]
     return jsonify(order_items_data), 200
+
+@main_bp.route('/categories', methods=["GET"])
+def categories():
+  
+    if request.method == "GET":
+        categories = Category.query.all()
+        category_dict = [
+            {
+                'id':category.id,
+                'name': category.name,
+            }
+            for category in categories
+        ]
+
+        return make_response(jsonify(category_dict), 200)
+    
+
+@main_bp.route('/contacts', methods=['GET', 'POST'])
+def manage_contacts():
+    if request.method == 'GET':
+        # Get all contacts
+        contacts = Contact.query.all()
+
+        contacts_list = []
+        for contact in contacts:
+            contact_dict = {
+                "id": contact.id,
+                "name": contact.name,
+                "email": contact.email,
+                "message": contact.message,
+            }
+            contacts_list.append(contact_dict)
+
+        return jsonify(contacts_list), 200
+
+    elif request.method == 'POST':
+        # Add a new contact
+        data = request.json
+        new_contact = Contact(
+            name=data.get('name'),
+            email=data.get('email'),
+            message=data.get('message')
+        )
+
+        db.session.add(new_contact)
+        db.session.commit()
+
+        return jsonify({"message": "Contact added successfully"}), 201
+
+
+
+@main_bp.route('/contacts/<int:contact_id>', methods=['GET'])
+def get_contact_by_id(contact_id):
+    contact = Contact.query.filter_by(id=contact_id).first()
+
+    if contact is None:
+        return jsonify({"error": "Contact not found!!"}), 404
+
+    contacts_dict = {
+        "id": contact.id,
+        "name": contact.name,
+        "email": contact.email,
+        "message": contact.message,
+    }
+
+    return jsonify(contacts_dict), 200
+
+
+@main_bp.route('/products', methods=['POST'])
+def create_product():
+    data = request.get_json()
+    new_product = Product(name=data['name'], price=data['price'], image_url=data['imageUrl'])
+    db.session.add(new_product)
+    db.session.commit()
+    return jsonify({'message': 'Product created successfully', 'product': {'id': new_product.id, 'name': new_product.name, 'price': new_product.price, 'image_url': new_product.image_url}}), 201
+

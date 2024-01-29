@@ -164,7 +164,7 @@ categories = [
     "id": 4,
     "name": "men's clothing"
   }
-];
+]
 
 
 

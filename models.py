@@ -112,3 +112,12 @@ class Address(db.Model):
     street = db.Column(db.String(255), nullable=False)
     city = db.Column(db.String(100), nullable=False)
     phone_number = db.Column(db.String(20))
+
+class Contact(db.Model):
+    id=db.Column(db.Integer, primary_key=True)
+    name=db.Column(db.String)
+    email=db.Column(db.String)
+    message=db.Column(db.String)
+
+    def __repr__(self):
+        return f'<{self.name}, {self.email}, {self.message}>'
